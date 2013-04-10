@@ -1,0 +1,11 @@
+#!/usr/bin/python 
+
+import fnmatch
+import os
+
+rootPath = '.'
+pattern = '*.pro'
+
+for root, dirs, files in os.walk(rootPath):
+    for filename in fnmatch.filter(files, pattern):
+        os.rename(filename, filename[:-1] + filename[-1:].lower())

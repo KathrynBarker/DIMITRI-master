@@ -1,0 +1,66 @@
+;**************************************************************************************
+;**************************************************************************************
+;*
+;* NAME:
+;*      GET_VEGETATION_LAT_LON_STEREO_POLE      
+;* 
+;* PURPOSE:
+;*      COMPUTES THE PER PIXEL VGT-2 GEOLOCATION
+;* 
+;* CALLING SEQUENCE:
+;*      RES = GET_VEGETATION_LAT_LON_STEREO_POLE(VGTLAT,VGTLON,NUM_PIX_X,NUM_PIX_Y)      
+;* 
+;* INPUTS:
+;*      VGTLON      - A 4 ELEMENT ARRAY CONTAINING THE TL, TR, BR AND BL LONGITUDES
+;*      VGTLAT      - A 4 ELEMENT ARRAY CONTAINING THE TL, TR, BR AND BL LATITUDES
+;*      NUM_PIX_X   - THE NUMBER OF IMAGE PIXELS IN X DIMENSION
+;*      NUM_PIX_Y   - THE NUMBER OF IMAGE PIXELS IN Y DIMENSION
+;*
+;* KEYWORDS:
+;*      VERBOSE    - PROCESSING STATUS OUTPUTS
+;*
+;* OUTPUTS:
+;*      STRUCT.LAT  - DERIVED PRODUCT LATITUDE
+;*      STRUCT.LON  - DERIVED PRODUCT LONGITUDE
+;*
+;* COMMON BLOCKS:
+;*      NONE
+;*
+;* MODIFICATION HISTORY:
+;*        18 JUN 2012 - C KENT    - DIMITRI-2 V1.0
+;*
+;* VALIDATION HISTORY:
+;*
+;**************************************************************************************
+;**************************************************************************************
+
+FUNCTION GET_VEGETATION_LAT_LON_STEREO_POLE,VGTLAT,VGTLON,NUMPIXX,NUMPIXY,VERBOSE=VERBOSE
+
+  IF VGTLAT[0] LT 0. THEN CL = -90. ELSE CL = 90.
+  MAPSTRUCT = MAP_PROJ_INIT("POLAR STEREOGRAPHIC", $
+       CENTER_LONGITUDE=0.0, CENTER_LATITUDE=CL)
+   
+  UV = MAP_PROJ_FORWARD(VGTLON, VGTLAT, MAP_STRUCTURE=MAPSTRUCT)
+  TIDX = [0,1,3,2]
+  SIDX = [0,1,2,3]
+  
+  U = MAKE_ARRAY(2,2,/DOUBLE)
+  V = MAKE_ARRAY(2,2,/DOUBLE)
+  U[SIDX] = UV[0,TIDX]
+  V[SIDX] = UV[1,TIDX]
+
+  IX = FINDGEN(NUMPIXX)/NUMPIXX-1l
+  IY = FINDGEN(NUMPIXY)/NUMPIXY-1L
+
+  UNEW = BILINEAR(U, IX, IY)
+  VNEW = BILINEAR(V, IX, IY)
+  TT = MAP_PROJ_INVERSE(UNEW, VNEW, MAP_STRUCTURE=MAPSTRUCT)
+  NU = REFORM(TT[0,*],NUMPIXX,NUMPIXY)
+  NV = REFORM(TT[1,*],NUMPIXX,NUMPIXY)
+
+;-------------------------------------------
+; RETURN NEW LAT AND LON VARIABLES
+  
+  RETURN,{LAT:NV,LON:NU}
+
+END

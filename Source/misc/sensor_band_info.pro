@@ -1,0 +1,79 @@
+;**************************************************************************************
+;**************************************************************************************
+;*
+;* NAME:
+;*      SENSOR_BAND_INFO       
+;* 
+;* PURPOSE:
+;*      RETURNS THE NUMBER OF BANDS FOR A GIVEN SENSOR
+;* 
+;* CALLING SEQUENCE:
+;*      RES = SENSOR_BAND_INFO(SENSOR_BD)      
+;* 
+;* INPUTS:
+;*      SENSOR_BD - A STRING CONTAINING THE NAME OF THE SENSOR OF INTEREST
+;*
+;* KEYWORDS:
+;*      VERBOSE   - PROCESSING STATUS OUTPUTS
+;*
+;* OUTPUTS:
+;*      SBI_BANDS - A FLOAT OF THE NUMBER OF AVAILABLE BANDS
+;*
+;* COMMON BLOCKS:
+;*      NONE
+;*
+;* MODIFICATION HISTORY:
+;*      24 JAN 2011 - C KENT   - DIMITRI-2 V1.0
+;*      21 MAR 2011 - C KENT   - MODIFIED FILE DEFINITION TO USE GET_DIMITRI_LOCATION
+;*
+;* VALIDATION HISTORY:
+;*      14 APR 2011 - C KENT   - WINDOWS 32-BIT IDL 7.1 AND LINUX 64-BIT IDL 8.0 NOMINAL
+;*                               COMPILATION AND OPERATION 
+;*
+;**************************************************************************************
+;**************************************************************************************
+
+FUNCTION SENSOR_BAND_INFO,SENSOR_BD,VERBOSE=VERBOSE
+
+  IF KEYWORD_SET(VERBOSE) THEN PRINT,'SENSOR_BAND_INFO: RETRIEVEING DATA FOR SENSOR - ',SENSOR_BD
+   
+;------------------------------------
+; DEFINE SENSOR FILE
+
+  SBI_FILE = GET_DIMITRI_LOCATION('SENSOR_DATA')  
+  RES = FILE_INFO(SBI_FILE)
+  IF RES.EXISTS EQ 0 THEN BEGIN
+    PRINT, 'SENSOR_BAND_INFO: ERROR, SENSOR INFORMATION FILE NOT FOUND'
+    RETURN,-1
+  ENDIF
+  
+;------------------------------------
+; GET SENSOR DATA TEMPLATE
+  
+  IF KEYWORD_SET(VERBOSE) THEN BEGIN
+    PRINT,'SENSOR_BAND_INFO: RETRIEVEING SENSOR DATA TEMPLATE'
+    TEMP = GET_DIMITRI_SENSOR_DATA_TEMPLATE(/VERBOSE)
+  ENDIF ELSE TEMP = GET_DIMITRI_SENSOR_DATA_TEMPLATE()
+
+;------------------------------------
+; FIND SENSOR MATCH WHITHIN FILE
+
+  IF KEYWORD_SET(VERBOSE) THEN PRINT,'SENSOR_BAND_INFO: SEARCHING SENSOR FILE FOR INPUT SENSOR' 
+  SBI_DATA = READ_ASCII(Sbi_FILE,TEMPLATE=TEMP)
+  RES = WHERE(STRMATCH(SBI_DATA.SENSOR_ID,SENSOR_BD) EQ 1)
+
+;------------------------------------
+;IF NO MATCH THEN ERROR AND RETURN
+  
+  IF RES[0] LT 0 THEN BEGIN
+    PRINT,'SENSOR_BAND_INFO: ERROR, NO SENSOR MATCH'
+    RETURN,-1
+  ENDIF
+  SBI_BANDS = SBI_DATA.NUM_BANDS[RES]
+
+;------------------------------------
+; IF AREA REQUIRED THEN SQUARE THE RESOLUTION
+  
+ RETURN,SBI_BANDS
+
+END

@@ -1,0 +1,111 @@
+The following tables give the relative contribution to the energy measurement 
+of the spectral band for each wavelength (sum of all contributions
+for each spectral band equals 1.00) assuming constant spectral illumination..
+These measurements (obtained in Oct. 1996) will be the last measurements
+available for the entire instrument.
+They are valid for the center of field of the instrument. 
+
+
+B0 (Blue)	
+Wavelength	Relative response
+415		0,000
+420		0,001
+425		0,005
+430		0,020
+435		0,043
+440		0,066
+445		0,086
+450		0,103
+455		0,117
+460		0,122
+465		0,119
+470		0,112
+475		0,099
+480		0,066
+485		0,028
+490		0,009
+495		0,003
+500		0,001
+
+B2 (Red)	
+Wavelength	Relative response
+580		0,000
+590		0,000
+600		0,001
+610		0,020
+620		0,076
+630		0,102
+640		0,107
+650		0,112
+660		0,119
+670		0,125
+680		0,121
+690		0,097
+700		0,060
+710		0,032
+720		0,016
+730		0,007
+740		0,003
+750		0,001
+760		0,001
+770		0,000
+
+B3 (NIR)	
+Wavelength	Relative response
+730		0,000
+740		0,001
+750		0,004
+760		0,014
+770		0,033
+780		0,054
+790		0,070
+800		0,079
+810		0,083
+820		0,083
+830		0,083
+840		0,083
+850		0,082
+860		0,080
+870		0,077
+880		0,070
+890		0,053
+900		0,028
+910		0,012
+920		0,005
+930		0,002
+940		0,001
+950		0,001
+960		0,000
+
+B4 (SWIR)	
+Wavelength	Relative response
+1520		0,000
+1530		0,001
+1540		0,001
+1550		0,002
+1560		0,003
+1570		0,006
+1580		0,012
+1590		0,024
+1600		0,043
+1610		0,070
+1620		0,092
+1630		0,103
+1640		0,106
+1650		0,105
+1660		0,103
+1670		0,095
+1680		0,085
+1690		0,061
+1700		0,035
+1710		0,020
+1720		0,013
+1730		0,008
+1740		0,005
+1750		0,003
+1760		0,002
+1770		0,001
+1780		0,001
+1790		0,001
+1800		0,001
+

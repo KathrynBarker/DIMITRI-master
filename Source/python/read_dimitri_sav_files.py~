@@ -1,0 +1,37 @@
+__author__ = 'marrabld'
+"""
+!!! Under construction !!!
+"""
+
+import scipy.io
+import pylab
+
+def read_parasol_file(file = /home/marrabld/projects/mosaec/Input/Site_DomeC/PARASOL/Proc_Calibration_1/PARASOL_TOA_REF.dat')
+
+bands = ['0b', '490p1', '490p2', '490p3', '443', '1020', '565', '670p1', '670p2', '670p3', '763', '765', '910', '865p1', '865p2','865p3'] # maybe?
+
+tmp_dict = scipy.io.readsav(file, python_dict=True)
+
+parasol_dict = {}
+parasol_meta_dict = {} # meta data of the file
+parasol_data_dict = {} # data including reflectance
+
+parasol_data_dict{'Decimal Year': tmp_dict[:,0]}
+parasol_data_dict{'Sensor Zenith': tmp_dict[:,1]}
+parasol_data_dict{'sensor Azimuth': tmp_dict[:,2]}
+parasol_data_dict{'Sun Zenith': tmp_dict[:,3]}
+parasol_data_dict{'Sun Azimuth': tmp_dict[:,4]}
+parasol_data_dict{'Ozone': tmp_dict[:,5]}
+parasol_data_dict{'Pressure': tmp_dict[:,6]}
+parasol_data_dict{'Rel Humidity': tmp_dict[:,7]}
+parasol_data_dict{'Wind Zonal': tmp_dict[:,8]}
+parasol_data_dict{'wind Merid': tmp_dict[:,9]}
+parasol_data_dict{'WVAP': tmp_dict[:,10]}
+
+# For now until i figure out what it is meant to be
+# !!1 warning missing tmp_dict[:,11:17] !!!
+
+# !!! Need to substitute with proper band names
+for i in range(0,9):
+    parasol_data_dict{'Band str(i) Reflectance': tmp_dict[:,17+i]}
+    parasol_data_dict{'Band str(i'}

@@ -1,0 +1,82 @@
+;**************************************************************************************
+;**************************************************************************************
+;*
+;* NAME:
+;*      GET_ATSR2_LAT_LON       
+;* 
+;* PURPOSE:
+;*      RETURNS THE LATITUDE AND LONGITUDE OF A ATSR2 IMAGE
+;* 
+;* CALLING SEQUENCE:
+;*      RES = GET_ATSR2_LAT_LON(FILENAME,GEO_DIR)      
+;* 
+;* INPUTS:
+;*      FILENAME    - A SCALAR CONTAINING THE FILENAME OF THE PRODUCT FOR GEOLOCAITON EXTRACTION      
+;*      GEO_DIR     - A STRING OF THE DIRECTION REQUIRED, EITHER 'NADIR' OR 'FWARD'
+;*
+;* KEYWORDS:
+;*      ENDIAN_SIZE - MACHINE ENDIAN SIZE (0: LITTLE, 1: BIG)
+;*      VERBOSE     - PROCESSING STATUS OUTPUTS
+;*
+;* OUTPUTS:
+;*      STRUCT.LAT  - LATITUDE IN DEGREES FOR L1B PRODUCT
+;*      STRUCT.LON  - LONGITUDE IN DEGREES FOR L1B PRODUCT	
+;*
+;* COMMON BLOCKS:
+;*      NONE
+;*
+;* MODIFICATION HISTORY:
+;*      12 DEC 2010 - C KENT   - DIMITRI-2 V1.0
+;*      14 DEC 2010 - C KENT   - UPDATED HEADER INFORMATION 
+;*      12 JUL 2011 - C KENT   - FIXED LAT/LON EXTRACTION BUG
+;*
+;* VALIDATION HISTORY:
+;*      14 DEC 2010 - C KENT    - WINDOWS 32-BIT MACHINE idl 7.1: COMPILATION SUCCESSFUL,
+;*                                EQUAL TO BEAM VISAT VALUES
+;*      06 JAN 2010 - C KENT    - LINUX 64-BIT MACHINE IDL 8.0: COMPILATION SUCCESSFUL,
+;*                                VALUES EQUAL TO WINDOWS 32-BIT MACHINE
+;*
+;**************************************************************************************
+;**************************************************************************************
+;NOTE, NEEDS ENVISAT AND ATSR2 TO BE COMPILED
+
+FUNCTION GET_ATSR2_LAT_LON,FILENAME,GEO_DIR,LENGTH,WIDTH,VERBOSE=VERBOSE
+
+;------------------------------------------------
+; CHECK FILENAME IS NOMINAL
+
+  IF FILENAME EQ '' THEN BEGIN
+    PRINT, 'ATSR2 L1B LAT LON: ERROR, INPUT FILENAME INCORRECT'
+    RETURN,-1
+  ENDIF
+
+;------------------------------------------------
+; OPEN THE PRODUCT AND READ THE HEADER INFORMATION
+ 
+  OPENR, GEO_LUN, FILENAME, /GET_LUN, /SWAP_IF_LITTLE_ENDIAN
+  AATSR_GET_HEADERS, GEO_LUN, GEO_MPH, GEO_SPH, GEO_DSD
+
+;------------------------------------------------
+; RETRIEVE ADS DATA DEPENDING ON DIRECTION
+
+  CASE GEO_DIR OF
+    'NADIR': TEMP = AATSR_READ_ADS_LOC(GEO_LUN, GEO_DSD[1],GEO_SPH,0,LENGTH,0,WIDTH,/NADIR_CORRECTION)
+    'FWARD': TEMP = AATSR_READ_ADS_LOC(GEO_LUN, GEO_DSD[1],GEO_SPH,0,LENGTH,0,WIDTH,/FORWARD_CORRECTION)
+  ELSE :BEGIN 
+    PRINT, 'ATSR2 L1B LAT LON: ERROR, SUPPLIED DIRECTION INCORRECT'
+    RETURN,{ERROR:-1} 
+  END
+  ENDCASE
+
+;------------------------------------------------
+; CLOSE THE PRODUCT AND FREE THE LUN
+
+  CLOSE,GEO_LUN
+  FREE_LUN, GEO_LUN
+
+;------------------------------------------------
+; RETURN GEOLOCATIO INFORMATION
+
+  RETURN,{LAT:TEMP.LATITUDE,LON:TEMP.LONGITUDE}
+
+END 

@@ -1,0 +1,141 @@
+;**************************************************************************************
+;**************************************************************************************
+;*
+;* NAME:
+;*      CONVERT_SADE_TO_DIMITRI       
+;* 
+;* PURPOSE:
+;*      CONVERTS A SADE FORMAT FILE INTO THE DIMITRI TOA REF ARRAY
+;* 
+;* CALLING SEQUENCE:
+;*      RES = CONVERT_SADE_TO_DIMITRI(SADEFILE,SENSOR) 
+;* 
+;* INPUTS:
+;*      SADEFILE - THE FULL PATH TO THE SADE FILE  
+;*      SENSOR   - THE SENSOR NAME
+;*
+;* KEYWORDS:
+;*
+;* OUTPUTS:
+;*      SENSOR_TOA_REF - THE DIMITRI ARRAY STRUCTURE
+;*
+;* COMMON BLOCKS:
+;*      NONE
+;*
+;* MODIFICATION HISTORY:
+;*      16 DEC 2011 - C KENT  - INITIAL DIMITRI VERSION
+;*
+;* VALIDATION HISTORY:
+;*
+;**************************************************************************************
+;**************************************************************************************
+
+FUNCTION CONVERT_SADE_TO_DIMITRI,SADEFILE,SENSOR
+
+  CASE SENSOR OF
+    'AATSR'       : NBANDS=7 
+    'MERIS'       : NBANDS=15 
+    'MODISA'      : NBANDS=10 
+    'PARASOL'     : NBANDS=9 
+    'VEGETATION'  : NBANDS=4 
+  ENDCASE
+
+  IF SENSOR EQ 'MODISA' THEN TBANDS = 22 ELSE TBANDS=NBANDS
+  BIDX = [0,1,15,2,16,20,21,17,18,19] ;ONLY FOR MODISA
+  NUMNONREF=12+5
+
+;------------------------------
+;READ THE SADE FILE
+
+  SADEDATA = READ_SADE_TXT(SADEFILE,SENSOR)
+
+;------------------------------
+;CREATE A DIMITRI STRUCTURE TO HOLD THE DATA
+
+  SENSOR_TOA_REF = MAKE_ARRAY(/DOUBLE,2*TBANDS+NUMNONREF,N_ELEMENTS(SADEDATA.PROCNAME),VALUE=-999.)
+  EMPTY_AUX = MAKE_ARRAY(12,/DOUBLE,VALUE=-999.)
+
+;------------------------------
+; LOOP OVER EACH SADE OBSERVATION
+
+  FOR ISADE = 0,N_ELEMENTS(SADEDATA.PROCNAME)-1 DO BEGIN
+ 
+;------------------------------ 
+; CONVERT TIME TO DECIMAL FORMAT
+  
+    TTIME = SADEDATA.ACQDATE[ISADE]
+    YEAR    = DOUBLE(STRMID(TTIME,6,4))
+    MONTH   = DOUBLE(STRMID(TTIME,3,2))
+    DAY     = DOUBLE(STRMID(TTIME,0,2))
+    HOUR    = DOUBLE(STRMID(TTIME,11,2))
+    MINUTE  = DOUBLE(STRMID(TTIME,14,2))
+    SECOND  = DOUBLE(STRMID(TTIME,17,2))
+  
+    IF FLOOR(YEAR) MOD 4 EQ 0 THEN DIY=366. ELSE DIY=365. 
+    TEMP = DOUBLE((HOUR/(DIY*24.))+(MINUTE/(DIY*60.*24.))+SECOND/(DIY*60.*60.*24.)) 
+    DOY  = JULDAY(MONTH,DAY,YEAR)-JULDAY(1,0,YEAR)
+    DTIME  = DOUBLE(YEAR)+(DOUBLE(DOY)/DIY)+TEMP
+
+;------------------------------
+; EXTRACT ANGLES AND PARASOL CENTRE WAVELENGTH
+    
+    IDX = 3 ;IS PARASOL 670NM BAND FOR ASCENDING ORDER WAVELENGTHS
+    VZA = SADEDATA.(4+2*NBANDS+IDX)[ISADE]
+    VAA = SADEDATA.(4+3*NBANDS+IDX)[ISADE]
+    SZA = SADEDATA.(4+4*NBANDS+3)[ISADE]
+    SAA = SADEDATA.(4+4*NBANDS+4)[ISADE]
+
+;------------------------------
+; EXTRACT REF
+; EXTRACT STD
+
+    FOR IVAL = 0,1 DO BEGIN
+      TEMP = 0.0
+      FOR IBAND=0,NBANDS-1 DO BEGIN
+        TEMP = [TEMP,SADEDATA.(4+IBAND+IVAL*NBANDS)[ISADE]]
+      ENDFOR
+      TEMP = TEMP[1:NBANDS]
+      CASE IVAL OF
+        0 : TOA_REF = TEMP 
+        1 : TOA_STD = TEMP
+      ENDCASE
+    ENDFOR
+
+;------------------------------
+; MODISA BAND EXCEPTION - INSERT TOAREF INTO A 22 BAND ARRAY
+    
+    IF SENSOR EQ 'MODISA' THEN BEGIN
+      TEMP = TOA_REF
+      TOA_REF = DBLARR(TBANDS)-999.
+      TOA_REF[BIDX] = TEMP
+      TEMP = TOA_STD
+      TOA_STD = DBLARR(TBANDS)-999.
+      TOA_STD[BIDX] = TEMP
+    ENDIF
+
+;-------------------------------
+; METEO INFORMATION
+
+  ;DIMITRI WANTS OZONE, PRESSURE, HUMIDITY, WIND SPEED1, WNDSPEED 2, WVAP
+    EMPTY_AUX[10] = SADEDATA.WVAP[ISADE]
+    EMPTY_AUX[0] = SADEDATA.OZONE[ISADE] lt 0. ? -999. : SADEDATA.OZONE[ISADE]*1000. ; if valid then multiply by 1000
+    EMPTY_AUX[2] = SADEDATA.PRESS[ISADE]
+    
+    if SADEDATA.WIND[ISADE] lt 0. or SADEDATA.WIND[ISADE] gt 100. then begin
+    EMPTY_AUX[6] = -999.
+    EMPTY_AUX[8] = -999.
+    endif else begin
+    WIND = SADEDATA.WIND[ISADE] 
+    EMPTY_AUX[6] = SQRT((WIND^2)/2.)
+    EMPTY_AUX[8] = SQRT((WIND^2)/2.)
+    endelse
+
+;------------------------------
+; PLACE ALL DATA INTO DIMITRI VARIABLE
+  
+    SENSOR_TOA_REF[*,ISADE] = [DTIME,VZA,VAA,SZA,SAA,EMPTY_AUX,TOA_REF,TOA_STD]
+  ENDFOR
+
+  RETURN,SENSOR_TOA_REF
+
+END
